@@ -855,6 +855,24 @@ void Solo3v3BG::OnBattlegroundEndReward(Battleground* bg, Player* player, TeamId
 
         }
 
+        if (sConfigMgr->GetOption<bool>("Solo.3v3.Replace5v5Achievements", false))
+        {
+            player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING, atStats.Rating, ARENA_TYPE_5v5);
+            player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_TEAM_RATING, atStats.Rating, ARENA_TYPE_5v5);
+
+            if (isPlayerWinning && !sSolo->DidArenaParticipantDie(player->GetGUID()))
+            {
+                uint32 survivors = 0;
+
+                for (auto const& [guid, member] : bg->GetPlayers())
+                    if (member->GetBgTeamId() == winnerTeamId && !sSolo->DidArenaParticipantDie(guid))
+                        ++survivors;
+
+                if (survivors == 1)
+                    player->CastSpell(player, SPELL_LAST_MAN_STANDING, true);
+            }
+        }
+
         plrArenaTeam->SetArenaTeamStats(atStats);
         plrArenaTeam->NotifyStatsChanged();
         plrArenaTeam->SaveToDB(true);
@@ -1019,6 +1037,18 @@ void PlayerScript3v3Arena::OnPlayerBattlegroundDesertion(Player* player, const B
         default:
             break;
     }
+}
+
+void PlayerScript3v3Arena::OnPlayerJustDied(Player* player)
+{
+    if (!player)
+        return;
+
+    Battleground* bg = player->GetBattleground();
+    if (!bg || bg->GetArenaType() != ARENA_TYPE_3v3_SOLO)
+        return;
+
+    sSolo->MarkArenaParticipantDead(player->GetGUID());
 }
 
 void PlayerScript3v3Arena::OnPlayerLogin(Player* pPlayer)

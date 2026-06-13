@@ -35,6 +35,8 @@ constexpr uint32 ARENA_SLOT_SOLO_3v3 = 4;
 constexpr uint32 BATTLEGROUND_QUEUE_3v3_SOLO = 12;
 constexpr BattlegroundQueueTypeId bgQueueTypeId = (BattlegroundQueueTypeId)((int) BATTLEGROUND_QUEUE_3v3_SOLO);
 
+constexpr uint32 SPELL_LAST_MAN_STANDING = 26549;
+
 const uint32 FORBIDDEN_TALENTS_IN_1V1_ARENA[] =
 {
     // Healer
@@ -127,6 +129,7 @@ struct ArenaParticipant
     TeamId teamId           = TEAM_NEUTRAL;
     uint32 arenaTeamId      = 0;
     bool   alreadyProcessed = false; // true if CountAsLoss already ran (alive in-progress leaver)
+    bool   died             = false; // died during the match
 };
 
 class Solo3v3
@@ -146,6 +149,9 @@ public:
     void RegisterArenaParticipants(Battleground* bg);
     void CleanUpArenaParticipants(uint32 instanceId);
     bool IsPlayerInActiveArena(ObjectGuid guid) const;
+
+    void MarkArenaParticipantDead(ObjectGuid guid);
+    bool DidArenaParticipantDie(ObjectGuid guid) const;
     void ProcessAbsentParticipants(Battleground* bg, TeamId winnerTeamId);
 
     // Pre-match team ratings, stored at queue time and used for rating delta calculation.
